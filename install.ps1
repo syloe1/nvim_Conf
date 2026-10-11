@@ -38,6 +38,30 @@ function Write-Warn ($m) { Write-Host "[warn] $m" -ForegroundColor Yellow }
 function Write-Err  ($m) { Write-Host "[error] $m" -ForegroundColor Red }
 function Have ($exe) { $null -ne (Get-Command $exe -ErrorAction SilentlyContinue) }
 
+# Run a native command and return its exit code.
+#
+# Why this wrapper: native tools (git especially) write ordinary progress such
+# as "Cloning into ..." to stderr. With $ErrorActionPreference = 'Stop', any
+# stderr output that reaches PowerShell's error stream - which happens as soon
+# as the caller merges it, e.g. `... | iex 2>&1` or redirecting to a log -
+# becomes a *terminating* error and kills the installer mid-clone. So native
+# calls run with the preference relaxed and their output re-emitted as plain
+# host text, and failures are reported through the exit code instead.
+function Invoke-Native {
+  param([string]$Exe, [string[]]$Arguments)
+  $prev = $ErrorActionPreference
+  $ErrorActionPreference = 'Continue'
+  try {
+    $output = & $Exe @Arguments 2>&1
+    $code = $LASTEXITCODE
+  } finally {
+    $ErrorActionPreference = $prev
+  }
+  foreach ($line in $output) { Write-Host "    $line" }
+  if ($null -eq $code) { $code = 0 }
+  return $code
+}
+
 if ($Help) {
   Write-Host @'
 One-command installer for syloe1/nvim_Conf.
@@ -89,13 +113,19 @@ if (-not (Have git)) {
 # --- place the configuration ----------------------------------------------
 
 $Backup = $null
-$isRepo = (Test-Path (Join-Path $Dir '.git')) -and
-          ((git -C $Dir remote get-url origin 2>$null) -match 'nvim_Conf')
+$isRepo = $false
+if (Test-Path (Join-Path $Dir '.git')) {
+  $ErrorActionPreference = 'Continue'
+  $remote = (& git -C $Dir remote get-url origin 2>$null)
+  $ErrorActionPreference = 'Stop'
+  $isRepo = "$remote" -match 'nvim_Conf'
+}
 
 if ($isRepo) {
   Write-Log "Existing install detected at $Dir - updating."
-  git -C $Dir pull --ff-only
-  if ($LASTEXITCODE -ne 0) { Write-Warn 'Could not fast-forward; keeping the current checkout.' }
+  if ((Invoke-Native git @('-C', $Dir, 'pull', '--ff-only')) -ne 0) {
+    Write-Warn 'Could not fast-forward; keeping the current checkout.'
+  }
 } elseif (Test-Path $Dir) {
   $Backup = "$Dir.bak.$(Get-Date -Format 'yyyyMMdd-HHmmss')"
   Write-Log "Found an existing $Dir - backing it up to $Backup"
@@ -105,17 +135,13 @@ if ($isRepo) {
 if (-not (Test-Path (Join-Path $Dir '.git'))) {
   New-Item -ItemType Directory -Force -Path (Split-Path -Parent $Dir) | Out-Null
   Write-Log "Cloning configuration into $Dir (branch: $Branch)"
-  if ($env:NVIM_CONF_REPO -or $env:NVIM_CONF_MIRROR) {
-    git clone --branch $Branch $RepoUrl $Dir
-  } else {
-    git clone --branch $Branch $RepoUrl $Dir
-    if ($LASTEXITCODE -ne 0) {
-      Write-Warn "Direct GitHub clone failed - retrying via mirror ${MirrorPrefix} (third-party)."
-      if (Test-Path $Dir) { Remove-Item -Recurse -Force $Dir }
-      git clone --branch $Branch "$MirrorPrefix$RepoUrl" $Dir
-    }
+  $rc = Invoke-Native git @('clone', '--branch', $Branch, $RepoUrl, $Dir)
+  if ($rc -ne 0 -and -not ($env:NVIM_CONF_REPO -or $env:NVIM_CONF_MIRROR)) {
+    Write-Warn "Direct GitHub clone failed - retrying via mirror ${MirrorPrefix} (third-party)."
+    if (Test-Path $Dir) { Remove-Item -Recurse -Force $Dir }
+    $rc = Invoke-Native git @('clone', '--branch', $Branch, "$MirrorPrefix$RepoUrl", $Dir)
   }
-  if ($LASTEXITCODE -ne 0) { Write-Err 'Clone failed. Check your network or set NVIM_CONF_MIRROR.'; exit 1 }
+  if ($rc -ne 0) { Write-Err 'Clone failed. Check your network or set NVIM_CONF_MIRROR.'; exit 1 }
 }
 
 # --- ensure NeoVim ---------------------------------------------------------
@@ -123,7 +149,7 @@ if (-not (Test-Path (Join-Path $Dir '.git'))) {
 if (-not (Have nvim)) {
   Write-Log 'NeoVim not found - attempting to install it via winget.'
   if (Have winget) {
-    winget install --id Neovim.Neovim -e --accept-source-agreements --accept-package-agreements
+    Invoke-Native winget @('install', '--id', 'Neovim.Neovim', '-e', '--accept-source-agreements', '--accept-package-agreements') | Out-Null
     if (-not (Have nvim)) {
       Write-Warn 'NeoVim is not on PATH yet - open a NEW terminal after this finishes.'
     }
@@ -145,13 +171,14 @@ if (-not $NoDeps -and (Have winget)) {
   )
   foreach ($p in $pkgs) {
     Write-Log "  $($p.What)"
-    winget install --id $p.Id -e --accept-source-agreements --accept-package-agreements
-    if ($LASTEXITCODE -ne 0) { Write-Warn "  $($p.Id) did not install - $($p.What) will be unavailable." }
+    $rc = Invoke-Native winget @('install', '--id', $p.Id, '-e', '--accept-source-agreements', '--accept-package-agreements')
+    if ($rc -ne 0) { Write-Warn "  $($p.Id) did not install - $($p.What) will be unavailable." }
   }
   if (Have go) {
     Write-Log 'Installing gopls.'
-    go install golang.org/x/tools/gopls@latest
-    if ($LASTEXITCODE -ne 0) { Write-Warn 'gopls install failed.' }
+    if ((Invoke-Native go @('install', 'golang.org/x/tools/gopls@latest')) -ne 0) {
+      Write-Warn 'gopls install failed.'
+    }
   }
   Write-Warn 'Clipboard sharing needs win32yank.exe on your PATH:'
   Write-Warn '  https://github.com/equalsraf/win32yank/releases'
@@ -163,8 +190,7 @@ if (-not $NoDeps -and (Have winget)) {
 
 if (Have nvim) {
   Write-Log 'Installing plugins with lazy.nvim (first run can take a few minutes)...'
-  & nvim --headless '+Lazy! sync' '+qa'
-  if ($LASTEXITCODE -ne 0) {
+  if ((Invoke-Native nvim @('--headless', '+Lazy! sync', '+qa')) -ne 0) {
     Write-Warn 'Plugin sync did not finish. Open nvim and run :Lazy sync - lazy.nvim also'
     Write-Warn 'installs anything missing on your first normal launch.'
   }
@@ -172,8 +198,10 @@ if (Have nvim) {
   Write-Log 'Building Tree-sitter parsers (c, cpp, go, lua)...'
   # Single-quoted Lua strings keep this argument free of double quotes, which
   # PowerShell 5.1 would otherwise mangle on the way to nvim.exe.
-  & nvim --headless -c 'lua pcall(function() require(''nvim-treesitter'').install({''c'',''cpp'',''go'',''lua''}):wait(600000) end)' -c 'qa!'
-  if ($LASTEXITCODE -ne 0) { Write-Warn 'Parser build skipped; run :TSUpdate inside nvim later.' }
+  $ts = 'lua pcall(function() require(''nvim-treesitter'').install({''c'',''cpp'',''go'',''lua''}):wait(600000) end)'
+  if ((Invoke-Native nvim @('--headless', '-c', $ts, '-c', 'qa!')) -ne 0) {
+    Write-Warn 'Parser build skipped; run :TSUpdate inside nvim later.'
+  }
 } else {
   Write-Warn 'nvim is not on PATH in this session - open a new terminal, then run: nvim --headless "+Lazy! sync" +qa'
 }
