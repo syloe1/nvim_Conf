@@ -1,0 +1,15 @@
+require'catppuccin'.setup {
+    aerial = true,
+    diffview = true,
+    gitsigns = true,
+    hop = true,
+    mason = true,
+    neogit = true,
+    cmp = true,
+    notify = true,
+    nvim_surround = true,
+    nvimtree = true,
+    treesitter_context = true,
+    ts_rainbow = true,
+    which_key = true,
+}
