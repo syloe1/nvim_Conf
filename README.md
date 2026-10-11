@@ -1,5 +1,7 @@
 # nvim_Conf
 
+[English](README.en.md) | **中文**
+
 我自用的一套 NeoVim 配置：智能补全、LSP、Tree-sitter 语法高亮、全局搜索、文件浏览、集成终端、Git 集成等，纯 Lua 配置，开箱即用。
 
 本配置基于 [archibate/vimrc](https://github.com/archibate/vimrc)（“小彭老师自用 NeoVim 整合包”）修改而来。
