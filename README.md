@@ -24,6 +24,23 @@ bash install.sh
 
 常用参数：`--dir <路径>` 指定安装目录、`--no-deps` 跳过系统依赖、`--yes` 全自动不询问、`--help` 查看帮助。
 
+### 国内网络
+
+如果 `raw.githubusercontent.com` / `github.com` 访问不了，用 jsDelivr 镜像获取脚本：
+
+```bash
+curl -SLf https://cdn.jsdelivr.net/gh/syloe1/nvim_Conf@main/install.sh | bash
+```
+
+- 克隆仓库时若直连 github.com 失败，脚本会自动改用 `gh-proxy.com` 镜像重试（想指定别的镜像可设环境变量 `NVIM_CONF_MIRROR` 或直接 `NVIM_CONF_REPO=<你的地址>`）。
+- **插件本身也来自 GitHub**。若插件下载不动，可让 git 全局走镜像再安装：
+
+  ```bash
+  git config --global url."https://gh-proxy.com/https://github.com/".insteadOf "https://github.com/"
+  ```
+
+  之后在 nvim 里执行 `:PackerSync` 即可。不需要时用 `git config --global --unset url."https://gh-proxy.com/https://github.com/".insteadOf` 取消。
+
 ## 平台支持
 
 | 平台 | 支持 | 说明 |

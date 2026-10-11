@@ -17,6 +17,7 @@ set -euo pipefail
 REPO_URL="${NVIM_CONF_REPO:-https://github.com/syloe1/nvim_Conf.git}"
 BRANCH="${NVIM_CONF_BRANCH:-main}"
 DEST="${NVIM_CONF_DIR:-$HOME/.config/nvim}"
+MIRROR_PREFIX="${NVIM_CONF_MIRROR:-https://gh-proxy.com/}"
 RUN_DEPS=1
 ASSUME_YES=0
 
@@ -76,6 +77,22 @@ run_timeout() {
   else "$@"; fi
 }
 
+# Clone the repo, falling back to a GitHub mirror when github.com is unreachable
+# (common on some networks in China). A custom NVIM_CONF_REPO disables the fallback.
+clone_repo() {
+  local url="$1" dest="$2"
+  if [ -n "${NVIM_CONF_REPO:-}" ] || [ -n "${NVIM_CONF_MIRROR:-}" ]; then
+    git clone --depth 1 --branch "$BRANCH" "$url" "$dest"
+    return
+  fi
+  if git clone --depth 1 --branch "$BRANCH" "$url" "$dest"; then
+    return
+  fi
+  warn "Direct GitHub clone failed — retrying via mirror ${MIRROR_PREFIX} (third-party)."
+  rm -rf "$dest"
+  git clone --depth 1 --branch "$BRANCH" "${MIRROR_PREFIX}${url}" "$dest"
+}
+
 # --- place the configuration ----------------------------------------------
 
 BACKUP=""
@@ -86,11 +103,11 @@ elif [ -e "$DEST" ]; then
   BACKUP="$DEST.bak.$(date +%Y%m%d-%H%M%S)"
   log "Found an existing $DEST — backing it up to $BACKUP"
   mv "$DEST" "$BACKUP"
-  git clone --depth 1 --branch "$BRANCH" "$REPO_URL" "$DEST"
+  clone_repo "$REPO_URL" "$DEST"
 else
   log "Cloning configuration into $DEST"
   mkdir -p "$(dirname "$DEST")"
-  git clone --depth 1 --branch "$BRANCH" "$REPO_URL" "$DEST"
+  clone_repo "$REPO_URL" "$DEST"
 fi
 
 # --- ensure NeoVim ---------------------------------------------------------
