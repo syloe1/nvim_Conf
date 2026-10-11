@@ -6,6 +6,39 @@
 
 > 截图占位：欢迎在真实终端截图后，替换成 `cover.png` 并在此处引用。
 
+## 功能亮点
+
+- **智能补全**：`nvim-cmp` + `LuaSnip` 代码片段，整合 LSP / 缓冲区 / 路径 / Git 补全；支持中文输入法（rime / 拼音）、emoji、计算器、拼写。
+- **LSP 语言服务**：`mason` 统一管理服务器（`clangd` / `pyright` / `lua_ls` / `typescript` / `cmake` / `rust` …），提供跳转定义/声明/引用/实现、重命名、代码操作、签名帮助、实时诊断。
+- **语法高亮与文本对象**：`nvim-treesitter` 高亮、缩进、彩虹括号、上下文；`textobjects` 支持按语法块选择 / 跳转 / 换位。
+- **全局搜索**：`telescope` —— 文件、最近文件、跨文件 grep、Git 提交与分支、命令历史、帮助文档等，一切皆可模糊查找。
+- **文件树与大纲**：`nvim-tree` 文件树、`aerial` 符号大纲。
+- **Git 集成**：`neogit` 面板、`gitsigns` 行内标记、`diffview`、`fugitive`。
+- **调试**：`nvim-dap` + `dap-ui`，断点与单步。
+- **终端与一键运行**：`toggleterm` 内置终端；`<F5>` 一键构建/运行。
+- **C/C++ 友好**：`cmake-tools` 集成（`cmc/b/r`），`clangd` 切换头/源文件，`QuickFix` 编译错误列表。
+- **编辑增强**：`surround` 括号环绕、自动配对/闭合、多光标（`vim-visual-multi`）、快速注释、`hop` 跳转、标记。
+- **界面**：`catppuccin` / `tokyonight` 主题、`lualine` 状态栏、`bufferline` 标签页、`noice` / `notify` 消息、`which-key` 键位提示、`scrollbar` 滚动条。
+- **Markdown / 排版**：渲染增强、`markdown-preview` 预览、`mathjax`、图片粘贴。
+- **会话与持久化**：`auto-session` 自动恢复、`undotree`、自动保存。
+- **AI 辅助（可选，需自备 API key）**：`genius` / `gpt` / `avante` / `codeium` / `opencode`，可接 DeepSeek 等。
+
+> 完整键位说明见 [`scripts/key_details.md`](scripts/key_details.md)。
+
+## 常用快捷键速查
+
+| 场景 | 按键 |
+| --- | --- |
+| 基础 | `jk` / `kj` 回普通模式 · `q` 保存并关窗 · `Q` 录宏 · `gh` / `gl` 行首/行尾 · `gm` 行中 · `<F4>` 保存全部 · `<C-Insert>` / `<S-Insert>` 复制/粘贴 |
+| 功能窗口 | `<F12>` 大纲 · `<F10>` Git 面板 · `<F9>` 诊断 · `<F8>` 终端 · `<F7>` 文件树 · `<F6>` 编译错误 · `<F5>` 运行 |
+| 标签页 | `<F3>` / `gt` 下一个 · `<F2>` / `gb` 上一个 · `<F1>` / `g<Tab>` 固定 · `<S-F1>` 关闭 |
+| 窗口 | `<C-h/j/k/l>` 切换 · `<M-s>` / `<M-v>` 分屏 · `<M-h/j/k/l>` 调整大小 |
+| LSP | `gd` 定义 · `gD` 声明 · `gr` 引用 · `gY` 实现 · `gy` 类型定义 · `gss` 诊断 · `go` 切换头/源文件 |
+| 搜索（均以 `,` 开头） | `,l` 文件 · `,o` 最近文件 · `,b` 缓冲区 · `,k` 全局 grep · `,c` Git 历史 · `,v` 分支 · `,m` 标记 · `,a` 诊断 |
+| 构建 | `cmc` 配置 · `cmb` 构建 · `cmr` / `<F5>` 运行 · `cms` / `<S-F5>` 停止 |
+
+键位都可在 [`lua/archvim/mappings.lua`](lua/archvim/mappings.lua) 中修改。
+
 ## 一键安装
 
 ```bash
