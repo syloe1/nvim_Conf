@@ -2,137 +2,221 @@
 
 **English** | [中文](README.md)
 
-My personal NeoVim configuration: smart completion, LSP, Tree-sitter highlighting, fuzzy search, file explorer, integrated terminal, Git integration — all pure Lua, ready to use out of the box.
+My personal NeoVim config, **hand-written and single-file** — one `init.lua`, plugins managed
+by lazy.nvim. Small enough to read in one sitting, easy to extend: adding a plugin means adding
+one block, not digging through a module tree.
 
-Derived from [archibate/vimrc](https://github.com/archibate/vimrc).
+> This repo has two branches — don't take the wrong one:
+>
+> | Branch | Contents |
+> | --- | --- |
+> | **`com`** | 👈 **this one**, my own hand-written minimal config |
+> | `main` | a derivative of [archibate/vimrc](https://github.com/archibate/vimrc) — featureful but heavy |
+>
+> Every install command below points at the `com` branch.
 
-> Screenshot placeholder — capture your own terminal, save it as `cover.png`, and reference it here.
+> Screenshot placeholder: replace with `cover.png` and reference it here.
 
 ## Features
 
-- **Completion**: `nvim-cmp` + `LuaSnip` snippets, combining LSP / buffer / path / Git sources; supports Chinese input methods (rime / pinyin), emoji, calculator, and spell checking.
-- **LSP**: servers managed by `mason` (`clangd` / `pyright` / `lua_ls` / `typescript` / `cmake` / `rust` …) for go-to definition/declaration/references/implementation, rename, code actions, signature help, and live diagnostics.
-- **Syntax highlighting & text objects**: `nvim-treesitter` highlighting, indentation, rainbow brackets, context; `textobjects` for selecting / jumping / swapping by syntax node.
-- **Fuzzy search**: `telescope` — files, recent files, cross-file grep, Git commits and branches, command history, help docs; everything is fuzzy-findable.
-- **File tree & outline**: `nvim-tree` explorer, `aerial` symbol outline.
-- **Git**: `neogit` panel, `gitsigns` inline markers, `diffview`, `fugitive`.
-- **Debugging**: `nvim-dap` + `dap-ui` for breakpoints and stepping.
-- **Terminal & one-key run**: `toggleterm` built-in terminal; `<F5>` to build/run.
-- **C/C++ friendly**: `cmake-tools` integration (`cm c/b/r`), `clangd` header/source switching, `QuickFix` build errors.
-- **Editing**: `surround`, auto-pairing/closing, multi-cursor (`vim-visual-multi`), quick comments, `hop` jumps, marks.
-- **UI**: `catppuccin` / `tokyonight` themes, `lualine` statusline, `bufferline` tabs, `noice` / `notify` messages, `which-key` hints, `scrollbar`.
-- **Markdown / typesetting**: render enhancements, `markdown-preview`, `mathjax`, image paste.
-- **Sessions & persistence**: `auto-session` restore, `undotree`, autosave.
-- **AI assistants (optional, bring your own API key)**: `genius` / `gpt` / `avante` / `codeium` / `opencode`, e.g. with DeepSeek.
+- **LSP**: `clangd` (C/C++) and `gopls` (Go) wired up out of the box — goto definition/declaration/
+  reference/implementation, hover, rename, code actions.
+- **Completion**: `nvim-cmp` sourcing from LSP + current buffer + file paths, rounded borders,
+  `<Tab>` to navigate and `<CR>` to confirm.
+- **Syntax highlighting**: `nvim-treesitter` with parsers for `c` / `cpp` / `go` / `lua`.
+- **File tree**: `nvim-tree`, synced with the working directory and focused on the current file.
+- **Search**: `telescope` — files, live grep and symbols, all behind `<leader>`.
+- **Editing**: `nvim-autopairs` (integrated with completion confirm), `guess-indent`.
+- **Looks**: `tokyonight` (night) + `nvim-web-devicons`.
+- **`:Note`**: bounce the current file between nvim and VS Code without losing the cursor.
+  Windows only — see below.
+- **Ctrl + wheel**: zoom the terminal font. Windows Terminal only — see below.
 
-> The full keybinding reference is in [`scripts/key_details.md`](scripts/key_details.md) (written in Chinese).
+## Install
 
-## Keybindings cheat sheet
-
-| Context | Keys |
-| --- | --- |
-| Basics | `jk` / `kj` back to normal · `q` save & close window · `Q` record macro · `gh` / `gl` line start/end · `gm` line middle · `<F4>` save all · `<C-Insert>` / `<S-Insert>` copy/paste |
-| Panels | `<F12>` outline · `<F10>` Git panel · `<F9>` diagnostics · `<F8>` terminal · `<F7>` file tree · `<F6>` build errors · `<F5>` run |
-| Tabs | `<F3>` / `gt` next · `<F2>` / `gb` previous · `<F1>` / `g<Tab>` pin · `<S-F1>` close |
-| Windows | `<C-h/j/k/l>` switch · `<M-s>` / `<M-v>` split · `<M-h/j/k/l>` resize |
-| LSP | `gd` definition · `gD` declaration · `gr` references · `gY` implementation · `gy` type definition · `gss` diagnostics · `go` switch header/source |
-| Search (all start with `,`) | `,l` files · `,o` recent files · `,b` buffers · `,k` global grep · `,c` Git history · `,v` branches · `,m` marks · `,a` diagnostics |
-| Build | `cmc` configure · `cmb` build · `cmr` / `<F5>` run · `cms` / `<S-F5>` stop |
-
-Keymaps can be changed in [`lua/archvim/mappings.lua`](lua/archvim/mappings.lua).
-
-## Install (one command)
+**Linux / macOS / WSL2** (backs up any existing `~/.config/nvim` first):
 
 ```bash
-curl -SLf https://raw.githubusercontent.com/syloe1/nvim_Conf/main/install.sh | bash
+curl -SLf https://raw.githubusercontent.com/syloe1/nvim_Conf/com/install.sh | bash
 ```
 
-The script will: back up your existing `~/.config/nvim` (if any) → clone this configuration → install system dependencies → bootstrap packer and download plugins. Then just run `nvim`.
+**Native Windows** (PowerShell, installs to `%LOCALAPPDATA%\nvim`):
 
-Safer alternative (download, read, then run):
+```powershell
+irm https://raw.githubusercontent.com/syloe1/nvim_Conf/com/install.ps1 | iex
+```
+
+The script backs up your old config, clones this one, installs NeoVim if it is missing, installs
+system dependencies (best effort — a failure only warns), then installs plugins and builds
+Tree-sitter parsers headlessly. When it is done, just run `nvim`.
+
+Prefer to look before you leap:
 
 ```bash
-curl -SLf https://raw.githubusercontent.com/syloe1/nvim_Conf/main/install.sh -o install.sh
-less install.sh        # review the script
+curl -SLf https://raw.githubusercontent.com/syloe1/nvim_Conf/com/install.sh -o install.sh
+less install.sh        # read it
 bash install.sh
 ```
 
-Useful flags: `--dir <path>` install location, `--no-deps` skip system dependencies, `--yes` fully non-interactive, `--help` for help.
+### Options
 
-### Restricted networks (e.g. mainland China)
+| Script | Option | Effect |
+| --- | --- | --- |
+| `install.sh` | `--dir <path>` | install elsewhere (default `~/.config/nvim`) |
+| | `--branch <name>` | use another branch (default `com`) |
+| | `--no-deps` | skip system dependency installation |
+| | `--yes` | non-interactive |
+| | `--uninstall` | remove the config |
+| `install.ps1` | `-Dir` / `-Branch` / `-NoDeps` / `-Yes` / `-Uninstall` | as above |
 
-If `raw.githubusercontent.com` / `github.com` are unreachable, fetch the script via the jsDelivr mirror:
+Environment variables work too: `NVIM_CONF_DIR`, `NVIM_CONF_BRANCH`, `NVIM_CONF_REPO`, `NVIM_CONF_MIRROR`.
+
+### Behind a restrictive network (China)
+
+If `raw.githubusercontent.com` / `github.com` is unreachable, fetch the script via jsDelivr:
 
 ```bash
-curl -SLf https://cdn.jsdelivr.net/gh/syloe1/nvim_Conf@main/install.sh | bash
+curl -SLf https://cdn.jsdelivr.net/gh/syloe1/nvim_Conf@com/install.sh | bash
 ```
 
-- If cloning over github.com fails, the script automatically retries via the `gh-proxy.com` mirror (set `NVIM_CONF_MIRROR` for a different mirror, or `NVIM_CONF_REPO=<your URL>` directly).
-- **Plugins themselves also come from GitHub.** If plugin downloads stall, route git through a mirror before installing:
+- If the direct clone of github.com fails, the script retries through the `gh-proxy.com` mirror.
+  Point `NVIM_CONF_MIRROR` at another mirror, or set `NVIM_CONF_REPO` to bypass the fallback.
+- **The plugins come from GitHub too.** If they will not download, route git through a mirror:
 
   ```bash
   git config --global url."https://gh-proxy.com/https://github.com/".insteadOf "https://github.com/"
   ```
 
-  Then run `:PackerSync` inside nvim. To undo: `git config --global --unset url."https://gh-proxy.com/https://github.com/".insteadOf`.
+  then run `:Lazy sync` inside nvim. Undo with
+  `git config --global --unset url."https://gh-proxy.com/https://github.com/".insteadOf`.
+
+## Keymaps
+
+`<leader>` is **Space**.
+
+| What | Keys |
+| --- | --- |
+| File tree | `<leader>e` toggle · `<leader>r` refresh |
+| Search | `<leader>f` files · `<leader>g` live grep · `<leader>s` document symbols · `<leader>w` workspace symbols |
+| LSP | `gd` / `<F12>` definition · `gD` declaration · `gr` references · `gi` implementation · `K` hover · `<leader>rn` rename · `<leader>ca` code action |
+| Movement | `<A-,>` jump back · `Ctrl+LeftClick` goto definition |
+| Format | `==` reindent line · `<leader>=` format whole file |
+| Completion | `<Tab>` / `<S-Tab>` select · `<CR>` confirm · `<C-Space>` trigger · `<Esc>` cancel |
+| Autopairs | typing `(` `{` `[` closes itself · `<M-e>` wrap existing text |
+
+Everything lives in [`init.lua`](init.lua) — edit it directly.
+
+## The two party tricks
+
+### `:Note` — bounce between nvim and VS Code
+
+`:Note` opens the current file in VS Code at the same line and column; running it again closes
+that VS Code window and puts the terminal back in front. Lowercase `:note` works too.
+
+- first `:Note` → open the current file in VS Code at the same position
+- second `:Note` → close that VS Code window, focus the terminal; the file is reloaded if it
+  changed over there
+
+It relies on [`note-toggle.ps1`](note-toggle.ps1) sitting next to `init.lua`, which does the
+window finding/closing/activating. **Why a script at all**: modern VS Code runs one main process
+hosting every window, so all its windows share a pid — only the window handle (HWND) is unique.
+Before closing, the script re-checks that the handle still belongs to `Code.exe` *and* that its
+title names the file, so a stale handle can never close one of your other VS Code windows.
+
+Tune it via the `NOTE` table at the top of `init.lua`: `reuse_window` (default off),
+`autosave` (default on), `reload` (default on), `timeout_ms`.
+
+> Windows only: the whole block is guarded by `vim.fn.has("win32")`, so other platforms never
+> register the command.
+
+### Ctrl + wheel to zoom
+
+In Windows Terminal, `Ctrl + wheel` zooms the font.
+
+Why it needs Lua at all: WT has this built in, but it has to *receive* the wheel event first —
+with `mouse=a` set, nvim swallows it and WT never sees anything. And nvim cannot resize the
+terminal font itself (there is no escape sequence for that). So the config translates the
+`Ctrl+wheel` nvim receives into a synthetic `Ctrl+=` / `Ctrl+-` pair — WT's window-level
+shortcuts, which nvim cannot intercept — using LuaJIT FFI to call `user32!keybd_event` directly,
+so there is no process fork and no lag.
+
+> Windows only: `ffi.load("user32")` fails elsewhere, so the whole block is skipped there.
+
+## Dependencies
+
+The installer tries to install all of these. A missing one only costs you that specific
+capability — the editor still works.
+
+| Dependency | For | Without it |
+| --- | --- | --- |
+| **NeoVim ≥ 0.10** (0.11+ recommended) | the editor itself | required |
+| **git** | lazy.nvim cloning itself on first launch | required |
+| **clangd** | C/C++ LSP | no C/C++ completion or navigation |
+| **gopls** | Go LSP | no Go completion or navigation |
+| **ripgrep** | `<leader>g` live grep | no content search |
+| **Nerd Font** | file icons | icons render as boxes |
+| **win32yank.exe** (Windows) | system clipboard | copy/paste stays inside nvim |
+| **xclip / wl-clipboard** (Linux) | same | same |
+
+Install a Nerd Font (JetBrainsMono Nerd Font recommended) and select it in your terminal — no
+config change needed.
 
 ## Platform support
 
 | Platform | Support | Notes |
 | --- | --- | --- |
-| Linux (Ubuntu / Debian / Arch / Manjaro / Fedora / openSUSE / CentOS, …) | ✅ Full | One command; dependencies installed via the system package manager |
-| macOS | ✅ Full | Dependencies installed via Homebrew (no sudo) |
-| Windows + WSL2 | ✅ Recommended | Use it like Linux inside WSL — the best experience |
-| Windows + Git Bash | ⚠️ Best-effort | The script can place the config, but you must install system dependencies yourself; native Windows NeoVim reads `%LOCALAPPDATA%\nvim` by default, so `XDG_CONFIG_HOME` must be set |
-| Native Windows (cmd / PowerShell) | ❌ Not supported | Toolchain and path differences are too large; use WSL2 instead |
+| Linux (Ubuntu / Debian / Arch / Fedora / openSUSE…) | ✅ full | `install.sh` uses your package manager for dependencies |
+| macOS | ✅ full | dependencies via Homebrew; `clangd` ships in `brew install llvm` and needs a PATH tweak (the script prints it) |
+| Windows + WSL2 | ✅ recommended | use it exactly like Linux |
+| Native Windows | ✅ full | use `install.ps1`; `:Note` and Ctrl+wheel zoom only work here |
+| Windows + Git Bash | ⚠️ best effort | the config gets placed, but you install dependencies yourself; native nvim reads `%LOCALAPPDATA%\nvim`, not `~/.config/nvim` |
 
-## Dependencies
+## Layout
 
-The installer tries to install these automatically (`clangd`, `ripgrep`, `fzf`, `cmake`, `make`, `gcc`, `python3`, `nodejs/npm`, …). If some fail, the editor still works — only completion/formatting for the affected languages is limited. You can re-run it anytime:
-
-```bash
-~/.config/nvim/scripts/install_deps.sh
+```
+init.lua          the whole config
+note-toggle.ps1   Windows helper for :Note
+lazy-lock.json    pinned plugin revisions — same versions the author runs
+install.sh        Linux / macOS / WSL installer
+install.ps1       Windows installer
 ```
 
-## Icons & fonts
+## Updating / uninstalling
 
-If file icons show up as boxes/garbage, you're missing a Nerd Font. Install one (JetBrainsMono Nerd Font recommended), enable it in your terminal, then:
-
-```vim
-:lua require'archvim.options'.nerd_fonts = true
-```
-
-## Customization
-
-```bash
-~/.config/nvim/scripts/customize_settings.sh
-```
-
-It interactively asks a few preferences (transparency, inlay hints, clipboard sharing, Kitty image support, …) and writes them to `~/.local/share/nvim/archvim/opts.json`. Re-run anytime to change them.
-
-## Update
-
-Re-run the one-command installer; or:
+The config is a git clone, so updating is a pull:
 
 ```bash
 git -C ~/.config/nvim pull
-nvim                                          # then run :PackerSync inside
 ```
 
-## Uninstall / rollback
+or just re-run the installer. Run `:Lazy sync` to move plugins to the pinned revisions.
+
+Uninstall:
 
 ```bash
-rm -rf ~/.config/nvim ~/.local/share/nvim ~/.cache/nvim
+bash ~/.config/nvim/install.sh --uninstall      # or install.ps1 -Uninstall
 ```
 
-If a backup was made during install, it's at `~/.config/nvim.bak.<timestamp>` — restore it with `mv`.
-
-## Attribution & license
-
-This configuration is a derivative of [archibate/vimrc](https://github.com/archibate/vimrc). The upstream repository **declares no license**, so this repository ships none either; it is shared for personal and educational use only, and the copyright of upstream code belongs to its original author. If you intend to redistribute or use it commercially, please contact the upstream author first.
+It removes the config directory and asks whether to remove plugins/cache as well. If your old
+config was backed up during install, it sits at `~/.config/nvim.bak.<timestamp>` — restore it
+with `mv`.
 
 ## FAQ
 
-- **Plugins missing?** Open nvim and run `:PackerSync`.
-- **No LSP / syntax highlighting?** Run `scripts/install_deps.sh`, then `:TSUpdateSync` inside nvim.
-- **Don't want some plugins, or want to add one?** Edit the `plugins` list in `lua/archvim/plugins.lua`, then `:PackerSync`.
+- **Icons are boxes?** Install a Nerd Font and select it in your terminal.
+- **No LSP completion?** Check `clangd` / `gopls` are on `PATH` (`clangd --version` works).
+  Inside nvim, `:LspInfo` shows the state.
+- **`:Note` cannot find the script?** Make sure `note-toggle.ps1` sits next to `init.lua`
+  (a normal install keeps them together) and that `powershell` is on `PATH`.
+- **`:Note` says it found no window handle?** Usually VS Code started slower than `timeout_ms`;
+  raise the timeout.
+- **Adding a plugin?** Add an entry to `require("lazy").setup({...})` in `init.lua`, then reopen
+  nvim or `:Lazy sync`.
+- **Plugins missing?** `:Lazy sync`.
+
+## Credits & license
+
+A personal config — **all rights reserved** by default, but feel free to read it and borrow
+snippets. No open-source license is attached; ask the author before redistributing.
+
+(The archibate/vimrc derivative on `main` is the upstream author's — unrelated to this branch.)

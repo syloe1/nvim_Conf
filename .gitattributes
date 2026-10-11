@@ -1,0 +1,7 @@
+# Keep the shell installer LF everywhere: a CRLF shebang breaks bash on Linux,
+# even though Windows checkouts would otherwise normalise it to CRLF.
+*.sh text eol=lf
+
+# Everything else: normalise to LF in the repository, let each platform check
+# out whatever its tooling prefers.
+* text=auto

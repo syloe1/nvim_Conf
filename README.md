@@ -2,137 +2,208 @@
 
 [English](README.en.md) | **中文**
 
-我自用的一套 NeoVim 配置：智能补全、LSP、Tree-sitter 语法高亮、全局搜索、文件浏览、集成终端、Git 集成等，纯 Lua 配置，开箱即用。
+我自己在用的 NeoVim 配置，**手写单文件**，就一个 `init.lua`，插件交给 lazy.nvim 管。
+够用、好读、好改 —— 想加什么就往下写一行，不用先翻一堆模块文件。
 
-本配置基于 [archibate/vimrc](https://github.com/archibate/vimrc)（“小彭老师自用 NeoVim 整合包”）修改而来。
+> 本仓库有两个分支，别走错了：
+>
+> | 分支 | 内容 |
+> | --- | --- |
+> | **`com`** | 👈 **本页描述的这套**，我自己手写的精简配置 |
+> | `main` | 基于 [archibate/vimrc](https://github.com/archibate/vimrc)（小彭老师整合包）的衍生版，功能多但很重 |
+>
+> 下面所有安装命令都指向 `com` 分支。
 
-> 截图占位：欢迎在真实终端截图后，替换成 `cover.png` 并在此处引用。
+> 截图占位：欢迎替换成 `cover.png` 并在此处引用。
 
-## 功能亮点
+## 功能一览
 
-- **智能补全**：`nvim-cmp` + `LuaSnip` 代码片段，整合 LSP / 缓冲区 / 路径 / Git 补全；支持中文输入法（rime / 拼音）、emoji、计算器、拼写。
-- **LSP 语言服务**：`mason` 统一管理服务器（`clangd` / `pyright` / `lua_ls` / `typescript` / `cmake` / `rust` …），提供跳转定义/声明/引用/实现、重命名、代码操作、签名帮助、实时诊断。
-- **语法高亮与文本对象**：`nvim-treesitter` 高亮、缩进、彩虹括号、上下文；`textobjects` 支持按语法块选择 / 跳转 / 换位。
-- **全局搜索**：`telescope` —— 文件、最近文件、跨文件 grep、Git 提交与分支、命令历史、帮助文档等，一切皆可模糊查找。
-- **文件树与大纲**：`nvim-tree` 文件树、`aerial` 符号大纲。
-- **Git 集成**：`neogit` 面板、`gitsigns` 行内标记、`diffview`、`fugitive`。
-- **调试**：`nvim-dap` + `dap-ui`，断点与单步。
-- **终端与一键运行**：`toggleterm` 内置终端；`<F5>` 一键构建/运行。
-- **C/C++ 友好**：`cmake-tools` 集成（`cmc/b/r`），`clangd` 切换头/源文件，`QuickFix` 编译错误列表。
-- **编辑增强**：`surround` 括号环绕、自动配对/闭合、多光标（`vim-visual-multi`）、快速注释、`hop` 跳转、标记。
-- **界面**：`catppuccin` / `tokyonight` 主题、`lualine` 状态栏、`bufferline` 标签页、`noice` / `notify` 消息、`which-key` 键位提示、`scrollbar` 滚动条。
-- **Markdown / 排版**：渲染增强、`markdown-preview` 预览、`mathjax`、图片粘贴。
-- **会话与持久化**：`auto-session` 自动恢复、`undotree`、自动保存。
-- **AI 辅助（可选，需自备 API key）**：`genius` / `gpt` / `avante` / `codeium` / `opencode`，可接 DeepSeek 等。
-
-> 完整键位说明见 [`scripts/key_details.md`](scripts/key_details.md)。
-
-## 常用快捷键速查
-
-| 场景 | 按键 |
-| --- | --- |
-| 基础 | `jk` / `kj` 回普通模式 · `q` 保存并关窗 · `Q` 录宏 · `gh` / `gl` 行首/行尾 · `gm` 行中 · `<F4>` 保存全部 · `<C-Insert>` / `<S-Insert>` 复制/粘贴 |
-| 功能窗口 | `<F12>` 大纲 · `<F10>` Git 面板 · `<F9>` 诊断 · `<F8>` 终端 · `<F7>` 文件树 · `<F6>` 编译错误 · `<F5>` 运行 |
-| 标签页 | `<F3>` / `gt` 下一个 · `<F2>` / `gb` 上一个 · `<F1>` / `g<Tab>` 固定 · `<S-F1>` 关闭 |
-| 窗口 | `<C-h/j/k/l>` 切换 · `<M-s>` / `<M-v>` 分屏 · `<M-h/j/k/l>` 调整大小 |
-| LSP | `gd` 定义 · `gD` 声明 · `gr` 引用 · `gY` 实现 · `gy` 类型定义 · `gss` 诊断 · `go` 切换头/源文件 |
-| 搜索（均以 `,` 开头） | `,l` 文件 · `,o` 最近文件 · `,b` 缓冲区 · `,k` 全局 grep · `,c` Git 历史 · `,v` 分支 · `,m` 标记 · `,a` 诊断 |
-| 构建 | `cmc` 配置 · `cmb` 构建 · `cmr` / `<F5>` 运行 · `cms` / `<S-F5>` 停止 |
-
-键位都可在 [`lua/archvim/mappings.lua`](lua/archvim/mappings.lua) 中修改。
+- **LSP**：`clangd`（C/C++）和 `gopls`（Go）开箱接入，跳转定义/声明/引用/实现、悬停、重命名、代码操作。
+- **智能补全**：`nvim-cmp`，数据源取 LSP + 当前缓冲区 + 文件路径，圆角边框，`<Tab>` 选择、`<CR>` 确认。
+- **语法高亮**：`nvim-treesitter`，预置 `c` / `cpp` / `go` / `lua` 四个 parser。
+- **文件树**：`nvim-tree`，跟随工作目录，打开文件时自动定位。
+- **全局搜索**：`telescope` —— 找文件、搜内容、找符号，都在 `<leader>` 下。
+- **编辑增强**：`nvim-autopairs` 自动配对（配合补全确认）、`guess-indent` 自动识别缩进。
+- **主题**：`tokyonight`（night 风格）+ `nvim-web-devicons` 文件图标。
+- **`:Note`**：在 nvim 和 VS Code 之间来回切换当前文件，光标位置不丢（仅 Windows，见下文）。
+- **Ctrl + 滚轮**：缩放终端字号（仅 Windows Terminal，见下文）。
 
 ## 一键安装
 
+**Linux / macOS / WSL2**（会先备份你已有的 `~/.config/nvim`）：
+
 ```bash
-curl -SLf https://raw.githubusercontent.com/syloe1/nvim_Conf/main/install.sh | bash
+curl -SLf https://raw.githubusercontent.com/syloe1/nvim_Conf/com/install.sh | bash
 ```
 
-脚本会自动：备份你已有的 `~/.config/nvim`（如果有）→ 克隆本配置 → 安装系统依赖 → 引导 packer 并下载插件。装完直接输入 `nvim` 即可。
+**Windows 原生**（PowerShell，装到 `%LOCALAPPDATA%\nvim`）：
 
-更稳妥的做法（先下载、看一眼、再执行）：
+```powershell
+irm https://raw.githubusercontent.com/syloe1/nvim_Conf/com/install.ps1 | iex
+```
+
+脚本会：备份旧配置 → 克隆本配置 → 缺失时尝试装 NeoVim → 装系统依赖（best effort，
+失败只 warning 不中断）→ 用 headless 模式把插件和 Tree-sitter parser 装好。装完直接敲 `nvim`。
+
+更稳妥的做法是先下载、看一眼、再执行：
 
 ```bash
-curl -SLf https://raw.githubusercontent.com/syloe1/nvim_Conf/main/install.sh -o install.sh
+curl -SLf https://raw.githubusercontent.com/syloe1/nvim_Conf/com/install.sh -o install.sh
 less install.sh        # 审阅脚本内容
 bash install.sh
 ```
 
-常用参数：`--dir <路径>` 指定安装目录、`--no-deps` 跳过系统依赖、`--yes` 全自动不询问、`--help` 查看帮助。
+### 常用参数
+
+| 脚本 | 参数 | 作用 |
+| --- | --- | --- |
+| `install.sh` | `--dir <路径>` | 装到指定目录（默认 `~/.config/nvim`） |
+| | `--branch <名字>` | 换分支（默认 `com`） |
+| | `--no-deps` | 跳过系统依赖安装 |
+| | `--yes` | 全自动，不询问 |
+| | `--uninstall` | 卸载 |
+| `install.ps1` | `-Dir` / `-Branch` / `-NoDeps` / `-Yes` / `-Uninstall` | 同上 |
+
+环境变量同样可用：`NVIM_CONF_DIR`、`NVIM_CONF_BRANCH`、`NVIM_CONF_REPO`、`NVIM_CONF_MIRROR`。
 
 ### 国内网络
 
-如果 `raw.githubusercontent.com` / `github.com` 访问不了，用 jsDelivr 镜像获取脚本：
+如果 `raw.githubusercontent.com` / `github.com` 不通，用 jsDelivr 镜像取脚本：
 
 ```bash
-curl -SLf https://cdn.jsdelivr.net/gh/syloe1/nvim_Conf@main/install.sh | bash
+curl -SLf https://cdn.jsdelivr.net/gh/syloe1/nvim_Conf@com/install.sh | bash
 ```
 
-- 克隆仓库时若直连 github.com 失败，脚本会自动改用 `gh-proxy.com` 镜像重试（想指定别的镜像可设环境变量 `NVIM_CONF_MIRROR` 或直接 `NVIM_CONF_REPO=<你的地址>`）。
-- **插件本身也来自 GitHub**。若插件下载不动，可让 git 全局走镜像再安装：
+- 克隆仓库时若直连 github.com 失败，脚本会自动改用 `gh-proxy.com` 镜像重试
+  （想换别的镜像就设 `NVIM_CONF_MIRROR`，或直接 `NVIM_CONF_REPO=<你的地址>`）。
+- **插件本身也来自 GitHub**。插件下载不动的话，让 git 全局走镜像再装：
 
   ```bash
   git config --global url."https://gh-proxy.com/https://github.com/".insteadOf "https://github.com/"
   ```
 
-  之后在 nvim 里执行 `:PackerSync` 即可。不需要时用 `git config --global --unset url."https://gh-proxy.com/https://github.com/".insteadOf` 取消。
+  之后在 nvim 里执行 `:Lazy sync`。不需要时用
+  `git config --global --unset url."https://gh-proxy.com/https://github.com/".insteadOf` 取消。
+
+## 快捷键
+
+`<leader>` 是**空格**。
+
+| 场景 | 按键 |
+| --- | --- |
+| 文件树 | `<leader>e` 开关 · `<leader>r` 刷新 |
+| 搜索 | `<leader>f` 找文件 · `<leader>g` 全文搜索 · `<leader>s` 当前文件符号 · `<leader>w` 全工程符号 |
+| LSP | `gd` / `<F12>` 定义 · `gD` 声明 · `gr` 引用 · `gi` 实现 · `K` 悬停 · `<leader>rn` 重命名 · `<leader>ca` 代码操作 |
+| 跳转 | `<A-,>` 跳回上一个位置 · `Ctrl+左键` 跳定义 |
+| 格式化 | `==` 重新缩进当前行 · `<leader>=` 格式化整个文件 |
+| 补全 | `<Tab>` / `<S-Tab>` 上下选择 · `<CR>` 确认 · `<C-Space>` 手动触发 · `<Esc>` 取消 |
+| 自动配对 | 输入 `(` `{` `[` 等自动补右半 · `<M-e>` 快速给已有内容加括号 |
+
+键位都在 [`init.lua`](init.lua) 里，直接改即可。
+
+## 两个特色功能
+
+### `:Note` —— 在 nvim 和 VS Code 之间往返
+
+`:Note` 会把当前文件（连同行列位置）用 VS Code 打开；再执行一次 `:Note`，就关掉那个
+VS Code 窗口、焦点回到终端。小写 `:note` 也能用。
+
+- 第一次 `:Note` → 用 VS Code 打开当前文件，跳到相同行列
+- 第二次 `:Note` → 关掉那个 VS Code 窗口，焦点回终端；文件若在 VS Code 里改过会自动重载
+
+依赖同目录的 [`note-toggle.ps1`](note-toggle.ps1)（负责 Windows 的窗口定位/关闭/激活）。
+**为什么需要它**：现代 VS Code 是「一个主进程托管所有窗口」，所有窗口共用一个 pid，
+只有窗口句柄（HWND）能区分。脚本关窗口前会二次校验句柄确实属于 `Code.exe`、
+且标题里含目标文件名 —— 不校验的话有误关你其它 VS Code 窗口的风险。
+
+行为可在 `init.lua` 顶部的 `NOTE` 表里调：`reuse_window`（复用窗口，默认关）、
+`autosave`（切过去前先存盘，默认开）、`reload`（切回来自动重载，默认开）、`timeout_ms`。
+
+> 仅 Windows：整段由 `vim.fn.has("win32")` 包着，其它平台不会注册这条命令。
+
+### Ctrl + 滚轮缩放字号
+
+在 Windows Terminal 里按 `Ctrl + 滚轮` 缩放字号。
+
+背景：WT 自带这个功能，但它得先收到滚轮事件 —— 你 `mouse=a` 一开，事件被 nvim 截走了，
+WT 压根看不到。而 nvim 又改不了终端字号（终端里没有这种转义序列）。所以这里把 nvim 收到的
+`Ctrl+滚轮` 翻译成一对合成的 `Ctrl+=` / `Ctrl+-`（WT 的窗口级快捷键，不会被 nvim 截走），
+用 LuaJIT 的 FFI 直接调 `user32!keybd_event`，不 fork 进程，所以没有卡顿。
+
+> 仅 Windows：`ffi.load("user32")` 在别的平台会失败，整段自动跳过。
+
+## 依赖
+
+一键脚本已尽量自动装好；即使某个缺失，也只是对应能力受限，不影响编辑器整体可用。
+
+| 依赖 | 用途 | 缺了会怎样 |
+| --- | --- | --- |
+| **NeoVim ≥ 0.10**（推荐 0.11+） | 本体 | 必需 |
+| **git** | lazy.nvim 首次启动时克隆自己 | 必需 |
+| **clangd** | C/C++ LSP | 没有 C/C++ 补全与跳转 |
+| **gopls** | Go LSP | 没有 Go 补全与跳转 |
+| **ripgrep** | `<leader>g` 全文搜索 | 搜不了内容 |
+| **Nerd Font** | 文件图标 | 图标显示成方块/乱码 |
+| **win32yank.exe**（Windows） | 与系统剪贴板互通 | 复制粘贴只在 nvim 内部有效 |
+| **xclip / wl-clipboard**（Linux） | 同上 | 同上 |
+
+装好 Nerd Font 后（推荐 JetBrainsMono Nerd Font）在终端里选它即可，无需改配置。
 
 ## 平台支持
 
 | 平台 | 支持 | 说明 |
 | --- | --- | --- |
-| Linux（Ubuntu / Debian / Arch / Manjaro / Fedora / openSUSE / CentOS 等） | ✅ 完整 | 一条命令搞定，自动用系统包管理器装依赖 |
-| macOS | ✅ 完整 | 依赖通过 Homebrew 安装（无需 sudo） |
-| Windows + WSL2 | ✅ 推荐 | 在 WSL 里当作 Linux 使用，体验最好 |
-| Windows + Git Bash | ⚠️ 尽力而为 | 脚本可摆放配置，但系统依赖需自行安装；原生 Windows NeoVim 默认读 `%LOCALAPPDATA%\nvim`，需额外设置 `XDG_CONFIG_HOME` |
-| Windows 原生（cmd / PowerShell） | ❌ 不支持 | 依赖工具链与路径差异太大，请改用 WSL2 |
+| Linux（Ubuntu / Debian / Arch / Fedora / openSUSE…） | ✅ 完整 | `install.sh` 自动用系统包管理器装依赖 |
+| macOS | ✅ 完整 | 依赖走 Homebrew；`clangd` 在 `brew install llvm` 里，需自行加 PATH（脚本会提示） |
+| Windows + WSL2 | ✅ 推荐 | 在 WSL 里当 Linux 用，体验最好 |
+| Windows 原生 | ✅ 完整 | 用 `install.ps1`；`:Note` 和 Ctrl+滚轮缩放在这个平台才生效 |
+| Windows + Git Bash | ⚠️ 尽力而为 | 能摆放配置，但系统依赖要自己装；原生 nvim 读 `%LOCALAPPDATA%\nvim`，不是 `~/.config/nvim` |
 
-## 依赖
+## 目录结构
 
-安装脚本会尽量自动安装（`clangd`、`ripgrep`、`fzf`、`cmake`、`make`、`gcc`、`python3`、`nodejs/npm` 等）。即使其中某个失败，也不影响编辑器整体使用，只是对应语言的补全/格式化会受限。之后可以随时手动重跑：
-
-```bash
-~/.config/nvim/scripts/install_deps.sh
+```
+init.lua          配置本体（全部逻辑都在这）
+note-toggle.ps1   :Note 的 Windows 辅助脚本
+lazy-lock.json    插件版本锁定 —— 保证你和作者装到完全一样的版本
+install.sh        Linux / macOS / WSL 安装脚本
+install.ps1       Windows 安装脚本
 ```
 
-## 图标与字体
+## 更新 / 卸载
 
-如果文件图标显示为方块/乱码，是缺少 Nerd Font。请安装一款 Nerd Font（推荐 JetBrainsMono Nerd Font）并在终端里启用，然后：
-
-```vim
-:lua require'archvim.options'.nerd_fonts = true
-```
-
-## 个性化定制
-
-```bash
-~/.config/nvim/scripts/customize_settings.sh
-```
-
-会交互式询问若干偏好（透明度、inlay hint、剪贴板共享、Kitty 图片支持等），写入 `~/.local/share/nvim/archvim/opts.json`，可随时重跑修改。
-
-## 更新
-
-重新执行一次一键安装命令即可；或：
+更新（配置本身是 git 仓库，直接 pull）：
 
 ```bash
 git -C ~/.config/nvim pull
-nvim                                          # 打开后执行 :PackerSync
 ```
 
-## 卸载 / 回滚
+或重跑一次安装脚本。想同步插件版本就顺便 `:Lazy sync`。
+
+卸载：
 
 ```bash
-rm -rf ~/.config/nvim ~/.local/share/nvim ~/.cache/nvim
+bash ~/.config/nvim/install.sh --uninstall      # 或 install.ps1 -Uninstall
 ```
 
-安装时若备份过旧配置，它位于 `~/.config/nvim.bak.<时间戳>`，可用 `mv` 还原。
-
-## 署名与许可
-
-本配置是基于 [archibate/vimrc](https://github.com/archibate/vimrc) 的衍生作品。上游仓库**未声明开源许可证**，因此本仓库也不附加许可证，仅供个人学习与使用；上游代码版权归其原作者所有。如需再分发或商用，请先联系上游作者。
+它会删掉配置目录，并询问是否连插件/缓存一起删。安装时若备份过旧配置，位于
+`~/.config/nvim.bak.<时间戳>`，用 `mv` 还原即可。
 
 ## 常见问题
 
-- **插件没装全？** 打开 nvim 执行 `:PackerSync`。
-- **没有 LSP / 语法高亮？** 先跑 `scripts/install_deps.sh`，再在 nvim 内执行 `:TSUpdateSync`。
-- **不要某些插件 / 想加插件？** 编辑 `lua/archvim/plugins.lua` 的 `plugins` 列表，然后 `:PackerSync`。
+- **图标是方块？** 装个 Nerd Font 并在终端里选中它。
+- **没有 LSP 补全？** 确认 `clangd` / `gopls` 在 `PATH` 里（`clangd --version` 能跑）。
+  加载 LSP 后 `:LspInfo` 看状态。
+- **`:Note` 报错找不到脚本？** 确认 `note-toggle.ps1` 和 `init.lua` 在同一目录
+  （正常安装不会丢），且 `powershell` 在 `PATH` 里。
+- **`:Note` 说没定位到窗口句柄？** 通常是因为 `reuse_window = false` 时 VS Code 启动太慢
+  超过了 `timeout_ms`，把超时调大即可。
+- **想加插件？** 在 `init.lua` 的 `require("lazy").setup({...})` 里加一项，
+  重开 nvim 或 `:Lazy sync`。
+- **插件没装全？** `:Lazy sync`。
+
+## 致谢与许可
+
+这是个人自用配置，默认**保留所有权利**，欢迎参考和自取片段。
+未附加开源许可证；如需再分发请先联系作者。
+
+（`main` 分支上的 archibate/vimrc 衍生版版权归其原作者所有，与本分支无关。）
